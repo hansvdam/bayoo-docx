@@ -47,13 +47,53 @@ class Paragraph(Parented):
         """
         self._p.getparent().remove(self._p)
         self._p = self._element = None
-    
+
+    @property
+    def all_elements(self):
+        """
+                Get all elements in the paragraph.
+
+                :return: A list of all elements in the paragraph.
+        """
+        return [r for r in self._p.xpath('./*')]
+
     def add_comment(self, text, author='python-docx', initials='pd', dtime=None ,rangeStart=0, rangeEnd=0, comment_part=None):
+        """
+        Add a comment to the paragraph.
+
+        This method adds a comment to the paragraph. The comment is added to the text runs within the range specified by rangeStart and rangeEnd.
+        :param rangeStart: The start of the range within which the comment should be added. It is the position of the text-Run at which the comment should start.
+        :param rangeEnd: The end of the range within which the comment should be added. It is the position of the Run at which the comment should start, which is the number AFTER the last text-Run that should be included.
+
+        example:
+        suppose we have the following paragraph:
+        "I am a paragraph in a word document about insirting comment's in python-docx.", which is split into Runs as follows:
+        Run 0: "I am a paragraph in a word document"
+        Run 1: "about"
+        Run 2: "insirting"
+        Run 3: "comment's"
+        Run 4: "in python-docx."
+
+        Now suppose we want to insert the following comment about "insirting comment's": "incorrect spelling, use: inserting comments".
+        We have to specify the rangeStart and rangeEnd as follows: rangeStart=2, rangeEnd=4.
+        """
         if comment_part is None:
             comment_part = self.part._comments_part.element
         if dtime is None:
             dtime = str( datetime.now() ).replace(' ', 'T')
-        comment =  self._p.add_comm(author, comment_part, initials, dtime, text, rangeStart, rangeEnd)
+
+        text_runs = {}
+        text_run_counter = 0
+        for counter, element in enumerate(self.all_elements, start=0):
+            # is of type text-run:
+            if element.tag.endswith('}r'):
+                text_runs[text_run_counter] = counter
+                text_run_counter += 1
+
+        # translate range within list of text_runs to range within list of all_elements of a paragraph:
+        new_range_start = text_runs[rangeStart]
+        new_range_end = text_runs[rangeEnd]
+        comment =  self._p.add_comm(author, comment_part, initials, dtime, text, new_range_start, new_range_end)
 
         return comment
     
