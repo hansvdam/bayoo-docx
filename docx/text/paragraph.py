@@ -84,12 +84,14 @@ class Paragraph(Parented):
 
         text_runs = {}
         text_run_counter = 0
-        for counter, element in enumerate(self.all_elements, start=0):
+        counter = 0
+        for element in self.all_elements:
             # is of type text-run:
             if element.tag.endswith('}r'):
                 text_runs[text_run_counter] = counter
                 text_run_counter += 1
-
+            counter += 1
+        text_runs[text_run_counter] = counter + 1
         # translate range within list of text_runs to range within list of all_elements of a paragraph:
         new_range_start = text_runs[rangeStart]
         new_range_end = text_runs[rangeEnd]
